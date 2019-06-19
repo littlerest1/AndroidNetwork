@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
@@ -22,6 +24,7 @@ import android.widget.*;
 import java.util.*;
 
 import static android.provider.AlarmClock.EXTRA_MESSAGE;
+import static android.text.format.Formatter.formatIpAddress;
 
 public class MainActivity extends Activity {
     public static final String EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE";
@@ -49,10 +52,36 @@ public class MainActivity extends Activity {
         Button clickMeBtn = (Button) findViewById(R.id.button1);
         clickMeBtn.setText("Scan for wifi");
 
-        TextView text = (TextView) findViewById(R.id.textView1);
-        text.setText("Results ");
+        TextView text = (TextView) findViewById(R.id.textView);
 
-        clickMeBtn.setOnClickListener(new View.OnClickListener() {
+
+        wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
+        boolean five = wifiManager.is5GHzBandSupported();
+        System.out.println("5G supported " + five);
+        if(five) {
+            text.setText("This device support 5G Results: ");
+        }
+        else{
+            text.setText("This device does not support 5G Results: ");
+        }
+        if (mWifi.isConnected()) {
+            WifiInfo info = wifiManager.getConnectionInfo();
+            System.out.println(info.toString());
+            TextView tx = (TextView) findViewById(R.id.textView1);
+
+            String ssid = info.getSSID();
+            WifiManager wm = (WifiManager) getSystemService(WIFI_SERVICE);
+            String ipAddress = formatIpAddress(info.getIpAddress());
+            System.out.println("5G supported " + five);
+            float fre = (float) info.getFrequency()/1000;
+            String numberAsString = String.format ("%.2f", fre);
+            tx.setText("Connecting " + ssid + " Speed: " + info.getLinkSpeed() + info.LINK_SPEED_UNITS + " Frequency: " + fre + "GHz IpAddress: " + ipAddress);
+        }
+
+            clickMeBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 myClick(v);
             }
@@ -292,22 +321,39 @@ public class MainActivity extends Activity {
             ArrayList<String> wifi = new ArrayList<String>();
            int level = -1;
             Collections.sort(list, new LevelComparator());
-
+            int count = 0;
             for(ScanResult x : list){
-                level = wifiManager.calculateSignalLevel(x.level, 100);
-                System.out.println(String.valueOf(level));
-                if(x.SSID.isEmpty()){
+                level = wifiManager.calculateSignalLevel(x.level, 5);
+                System.out.println(x.SSID + " strength " + String.valueOf(level));
+                if(x.SSID.equals("uniwide")){
+                    count ++;
+                }
+                if(x.SSID.isEmpty() || (x.SSID.equals("uniwide") && count >= 4)){
 
                     continue;
                 }
                 else if(x.capabilities.contains("WPA") && x.capabilities.contains("PSK")){
-                    wifi.add( "WPA/WPA2-PSK "+ x.SSID + "  -----------   " +  x.level);
+                    if(x.frequency >= 2400 && x.frequency < 5000) {
+                        wifi.add("WPA/WPA2-PSK " + x.SSID + "  -----------   " + x.level + "  2.4GHz");
+                    }
+                    else if(x.frequency >= 5000){
+                        wifi.add("WPA/WPA2-PSK " + x.SSID + "  -----------   " + x.level + "  5GHz");
+                    }
                 }
                 else if(x.capabilities.contains("WPA") && x.capabilities.contains("EAP")){
-                   wifi.add( "EAP "+ x.SSID + "  -----------   " +  x.level);
+                   if(x.frequency >= 2400 && x.frequency < 5000) {
+                       wifi.add("EAP " + x.SSID + "  -----------   " + x.level + " 2.4GHz");
+                   }else if(x.frequency >= 5000){
+                       wifi.add("EAP " + x.SSID + "  -----------   " + x.level + " 5GHz");
+                   }
                 }
                 else{
-                    wifi.add("OPEN " + x.SSID + "  -----------   " +  x.level);
+                    if(x.frequency >= 2400 && x.frequency < 5000){
+                         wifi.add("OPEN " + x.SSID + "  -----------   " +  x.level + " 2.4GHz");
+                    }
+                    else if(x.frequency >= 5000){
+                        wifi.add("OPEN " + x.SSID + "  -----------   " +  x.level + " 5GHz");
+                    }
                 }
             }
 

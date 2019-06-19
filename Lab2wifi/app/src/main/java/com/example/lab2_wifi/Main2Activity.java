@@ -4,17 +4,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.*;
 import android.net.wifi.*;
-import kotlinx.android.extensions.ContainerOptions;
+import java.lang.InterruptedException;
+import java.util.concurrent.TimeUnit;
 
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
+import static android.text.format.Formatter.formatIpAddress;
 
 public class Main2Activity extends AppCompatActivity {
     private String wifiName = "";
@@ -46,12 +44,19 @@ public class Main2Activity extends AppCompatActivity {
         System.out.println(wifiName + "     " + type);
         if (mWifi.isConnected()) {
             WifiInfo info = wifiManager.getConnectionInfo ();
+            System.out.println(info.toString());
+        //    TextView tx = (TextView) findViewById(R.id.textView);
+
             String ssid = info.getSSID();
+        //    tx.setText("Connecting " + ssid + " Speed: " + info.LINK_SPEED_UNITS.toString() + " Frequency: " + info.FREQUENCY_UNITS.toString());
+
             String temp =  "\"" + wifiName + "\"";
             System.out.println("Connected to wifi " + temp);
             if(ssid.equals(temp)){
                 System.out.println("Same as the connected wifi");
                 Toast.makeText(Main2Activity.this, "You already connected to this wifi.", Toast.LENGTH_LONG).show();
+                Intent intent1 = new Intent(this, MainActivity.class);
+                startActivity(intent1);
                 finish();
             }
         }
@@ -61,9 +66,11 @@ public class Main2Activity extends AppCompatActivity {
 
 
         // Capture the layout's TextView and set the string as its text
-        TextView textView = findViewById(R.id.textView);
-      //  textView.setText("Connect to wifi: " + wifiName + " ------------------- " + type);
-        textView.setText("Identity ");
+        TextView textView = findViewById(R.id.textView7);
+        textView.setText("Connect to wifi: " + wifiName + " ------------------- " + type);
+      //  textView.setText("Identity ");
+
+
 
         Button Cancel = (Button) findViewById(R.id.button1);
         Cancel.setText("Cancel");
@@ -84,7 +91,7 @@ public class Main2Activity extends AppCompatActivity {
 
         if(type.contains("EAP")){
             System.out.println("Connect to EAP network");
-            TextView uN = (TextView) findViewById(R.id.textView1);
+            TextView uN = (TextView) findViewById(R.id.textView);
             uN.setText("Identity: ");
         }
         if(type.contains("WPA")){
@@ -121,7 +128,23 @@ public class Main2Activity extends AppCompatActivity {
             System.out.println("net id is " +String.valueOf(netId));
             wifiManager.saveConfiguration();
             wifiManager.reconnect();
-            finish();
+
+ /*          wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
+            if(mWifi.isConnected()) {
+                String ipAddress = formatIpAddress(wifiManager.getConnectionInfo().getIpAddress());
+                Toast.makeText(Main2Activity.this, "Connected to " + ipAddress , Toast.LENGTH_LONG).show();
+
+                finish();
+                Intent intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
+            }
+
+            Intent intent = new Intent(this, MainActivity.class);
+            startActivity(intent);
+            finish();*/
         }
         else if(type.contains("EAP")){
             System.out.println("wifi type is EAP");
@@ -131,6 +154,7 @@ public class Main2Activity extends AppCompatActivity {
             System.out.println("wifi identity " +  username);
             config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_EAP);
             config.status=WifiConfiguration.Status.ENABLED;
+
             WifiEnterpriseConfig enterpriseCon = new WifiEnterpriseConfig();
             enterpriseCon.setIdentity(username);
             enterpriseCon.setPassword(password);
@@ -143,10 +167,6 @@ public class Main2Activity extends AppCompatActivity {
             System.out.println("net id is " +String.valueOf(netid) + " reconnect " + wifiManager.reconnect());
             wifiManager.saveConfiguration();
             wifiManager.reconnect();
-            if(netid > 0) {
-                finish();
-            }
-
 
         }
         else{
@@ -157,8 +177,26 @@ public class Main2Activity extends AppCompatActivity {
             System.out.println("net id is " +String.valueOf(netId));
             wifiManager.saveConfiguration();
             wifiManager.reconnect();
-            finish();
+
         }
+        try {
+            TimeUnit.SECONDS.sleep(3);
+            wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
+            if(mWifi.isConnected()) {
+                String ipAddress = formatIpAddress(wifiManager.getConnectionInfo().getIpAddress());
+                Toast.makeText(Main2Activity.this, "Connected to " + ipAddress , Toast.LENGTH_LONG).show();
+
+                finish();
+                Intent intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
+            }
+        }catch (Exception e){
+
+        }
+
 
     }
 }
